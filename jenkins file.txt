@@ -1,0 +1,66 @@
+pipeline {
+
+     parameters {
+         strings(name: 'environment' , defaultvalue: 'terraform' , description: 'workspace/environment file to use for deployment')
+         booleanparam(name: 'autoApprove' , defaultvalue: false, description: 'automatically run apply after generating plan?')
+
+      }
+
+
+     environment {
+       AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
+       AWS_SECRET_KEY_ID     = credentials('AWS_SECRET_KEY_ID')
+     
+     }
+  
+     agent any 
+         options {
+                 timestamps ()
+                 ansicolor('xterm')
+                }
+     stages {
+          stage('checkout') {
+               steps {
+                     script{
+                            dir("terraform")
+                            {
+
+                            }
+                         }
+                      }
+                    }
+
+            
+           stages('plan') {
+                steps {	
+                     sh 'pwd;cd terraform/aws-instances-first-script ; terraform init -input=false'
+                     sh 'pwd;cd terraform/aws-instances-first-script ; terraform workspace new ${environment}'
+                     sh 'pwd;cd terraform/aws-instances-first-script ; terraform workspace select ${environment}'
+                     sh 'pwd;cd terraform/aws-instances-first-script ; terraform plan -input=false -out tfplan'
+                     sh 'pwd;cd terraform/aws-instances-first-script ; terraform show -no-color tfplan > tfplan.txt'
+                   }
+                }
+                stage('approval') {
+                    when {
+                        not {
+                             equals expected: true, actual: params.autoaprrove
+                           }
+                        }
+                        
+                steps {
+                    script {
+                          def plan = readfile 'terraform/aws-first-script/tfplan.txt'
+                          input message = "do you want to apply?",
+                          parameters: [text(name: 'plan',description: 'please review the plan' defaultvalue:plan)]
+                       }
+                    }
+                  }
+               
+                stage('apply') {
+                      steps {
+                            sh "pwd;cd terraform/aws-instances-first-script ; terraform apply -input=false tfplan"
+                          }
+                        }
+                     } 
+                  
+                 }        
