@@ -24,7 +24,7 @@ pipeline {
                      script{
                             dir("terraform")
                             {
-
+                              git "https://github.com/rajparthi/doname.git"
                             }
                          }
                       }
@@ -33,11 +33,11 @@ pipeline {
             
            stages('plan') {
                 steps {	
-                     sh 'pwd;cd terraform/aws-instances-first-script ; terraform init -input=false'
-                     sh 'pwd;cd terraform/aws-instances-first-script ; terraform workspace new ${environment}'
-                     sh 'pwd;cd terraform/aws-instances-first-script ; terraform workspace select ${environment}'
-                     sh 'pwd;cd terraform/aws-instances-first-script ; terraform plan -input=false -out tfplan'
-                     sh 'pwd;cd terraform/aws-instances-first-script ; terraform show -no-color tfplan > tfplan.txt'
+                     sh 'pwd;cd terraform/doname ; terraform init -input=false'
+                     sh 'pwd;cd terraform/doname ; terraform workspace new ${environment}'
+                     sh 'pwd;cd terraform/doname ; terraform workspace select ${environment}'
+                     sh 'pwd;cd terraform/doname ; terraform plan -input=false -out tfplan'
+                     sh 'pwd;cd terraform/doname ; terraform show -no-color tfplan > tfplan.txt'
                    }
                 }
                 stage('approval') {
@@ -49,7 +49,7 @@ pipeline {
                         
                 steps {
                     script {
-                          def plan = readfile 'terraform/aws-first-script/tfplan.txt'
+                          def plan = readfile 'terraform/doname/tfplan.txt'
                           input message = "do you want to apply?",
                           parameters: [text(name: 'plan',description: 'please review the plan' defaultvalue:plan)]
                        }
@@ -58,7 +58,7 @@ pipeline {
                
                 stage('apply') {
                       steps {
-                            sh "pwd;cd terraform/aws-instances-first-script ; terraform apply -input=false tfplan"
+                            sh "pwd;cd terraform/doname ; terraform apply -input=false tfplan"
                           }
                         }
                      } 
